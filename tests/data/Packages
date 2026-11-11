@@ -1,0 +1,18 @@
+Package: curl
+Version: 7.81.0-1
+Depends: libc6 (>= 2.34), libcurl4 (= 7.81.0-1), zlib1g (>= 1:1.1.4)
+Description: command line tool for transferring data with URL syntax
+ curl is a command line tool for transferring data with URL syntax.
+
+Package: libcurl4
+Version: 7.81.0-1
+Pre-Depends: libc6 (>= 2.34)
+Depends: libssl3 | libssl1.1, perl:any, libc6 (>= 2.17)
+
+Package: libc6
+Version: 2.35-0ubuntu3
+Depends: libgcc-s1
+
+Package: libc6
+Version: 2.36-0ubuntu1
+Depends: libgcc-s1, libcrypt1
