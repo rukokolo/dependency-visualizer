@@ -1,0 +1,8 @@
+key,value
+package_name,A
+repository,tests/nonexistent.txt
+test_mode,true
+package_version,
+ascii_tree,true
+max_depth,3
+filter_substring,

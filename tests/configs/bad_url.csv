@@ -1,0 +1,8 @@
+key,value
+package_name,curl
+repository,ftp//не-url
+test_mode,false
+package_version,7.81.0-1
+ascii_tree,true
+max_depth,3
+filter_substring,
