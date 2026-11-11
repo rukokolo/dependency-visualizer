@@ -1,11 +1,14 @@
 """Получение информации о пакетах из репозитория Ubuntu (apt).
 
+Также содержит тестовый репозиторий, описанный текстовым файлом.
+
 Менеджеры пакетов и сторонние библиотеки не используются: индексный файл
 репозитория (Packages, Packages.gz или Packages.xz) скачивается и
 разбирается средствами стандартной библиотеки Python.
 """
 import gzip
 import lzma
+import re
 import urllib.error
 import urllib.request
 
@@ -14,6 +17,7 @@ CONTINUATION_CHARS = " \t"
 ALTERNATIVE_SEP = "|"
 VERSION_START = "("
 ARCH_SEP = ":"
+TEST_NAME_RE = re.compile(r"^[A-Z]+$")
 
 
 class RepositoryError(Exception):
@@ -145,3 +149,48 @@ class AptRepository:
         fields = stanza.get("Pre-Depends", "") + "," + \
             stanza.get("Depends", "")
         return parse_depends(fields)
+
+
+class TestRepository:
+    """Тестовый репозиторий: граф пакетов из текстового файла.
+
+    Формат — одна строка на пакет: "A: B C" (A зависит от B и C).
+    Имена пакетов — большие латинские буквы, # начинает комментарий.
+    """
+
+    def __init__(self, path):
+        """Читает файл описания графа."""
+        self.graph = {}
+        try:
+            with open(path, encoding="utf-8") as file:
+                lines = file.readlines()
+        except OSError as error:
+            raise RepositoryError(
+                f"не удалось прочитать файл {path}: {error}") from None
+        for line_no, line in enumerate(lines, start=1):
+            self._add_line(line.split("#")[0].strip(), f"{path}:{line_no}")
+
+    def _add_line(self, line, place):
+        """Разбирает одну строку описания графа."""
+        if not line:
+            return
+        if ":" not in line:
+            raise RepositoryError(f"{place}: ожидается 'ПАКЕТ: ЗАВИСИМОСТИ'")
+        name, _, rest = line.partition(":")
+        name, deps = name.strip(), rest.split()
+        for pkg in [name] + deps:
+            if not TEST_NAME_RE.match(pkg):
+                raise RepositoryError(
+                    f"{place}: имя '{pkg}' должно состоять "
+                    "из больших латинских букв")
+        if name in self.graph:
+            raise RepositoryError(f"{place}: пакет '{name}' описан повторно")
+        self.graph[name] = list(dict.fromkeys(deps))
+
+    def has_package(self, name):
+        """Проверяет, описан ли пакет в файле."""
+        return name in self.graph
+
+    def get_dependencies(self, name, version=None):
+        """Возвращает зависимости пакета (версии в тесте не используются)."""
+        return self.graph.get(name, [])
